@@ -14,6 +14,7 @@ export const Game = () => {
     const [chess, setChess] = useState(new Chess())
     const [board, setBoard] = useState(chess.board())
     const [started, setStarted] = useState(false)
+    const [playerColor, setPlayerColor] = useState("")
 
     useEffect(() => {
         if (!socket){
@@ -26,19 +27,35 @@ export const Game = () => {
             switch (message.type){
                 case INIT_GAME:
                     console.log("Game initialised")
-                    setChess(new Chess())
-                    setBoard(chess.board())
+                    const newChess = new Chess()
+                    setChess(newChess)
+                    setBoard(newChess.board())
+                    setPlayerColor(message.payload)
                     setStarted(true)
                     break
                 case MOVE:
-                    console.log('here')
                     const move = message.payload
-                    chess.move(move)
-                    setBoard(chess.board())
-                    console.log("Piece Moved")
+                    console.log("Received move:", move)
+                    console.log("Turn before move:", chess.turn())
+                    
+                    setChess(prevChess => {
+                        const newChess = new Chess(prevChess.fen())
+                        const moveResult = newChess.move(move)
+                        
+                        if (moveResult) {
+                            console.log("Move applied successfully")
+                            console.log("Turn after move:", newChess.turn())
+                            setBoard(newChess.board())
+                            return newChess
+                        } else {
+                            console.error("Invalid move:", move)
+                            return prevChess
+                        }
+                    })
                     break
                 case GAME_OVER:
                     console.log("Game over")
+                    window.alert("Game over " + message.payload + " wins")
                     break
             }
         }
@@ -49,11 +66,11 @@ export const Game = () => {
             Connecting...
         </div>
     }
-    return <div className="flex justify-center">
+    return <div className="flex justify-center max-h-screen h-screen overflow-y-auto">
         <div className="max-w-screen-lg w-full pt-8">
             <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                 <div className="col-span-4">
-                    <ChessBoard board={board} chess={chess} socket={socket}/>
+                    <ChessBoard board={board} chess={chess} socket={socket} playerColor={playerColor} />
                 </div>
                 <div className="col-span-2">
                     {!started && <Button onClick={()=>{
