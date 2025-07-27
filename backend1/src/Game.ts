@@ -5,7 +5,8 @@ import { db } from "./db"
 
 interface Move {
     from: string, 
-    to: string
+    to: string,
+    promotion? :string
 }
 
 export class Game {
@@ -29,10 +30,7 @@ export class Game {
         }))
     }
 
-    makeMove(socket: WebSocket, move: {
-        from: string,
-        to: string
-    }) {
+    makeMove(socket: WebSocket, move: Move) {
         if (this.moves.length % 2 == 0 && socket !== this.player1){
             return
         }
@@ -59,9 +57,18 @@ export class Game {
         }))
 
         if (this.board.isGameOver()){
+            let winner = this.board.turn() === "w" ? "black" : "white";
             this.player1.send(JSON.stringify({
                 type: GAME_OVER,
-                payload: this.board.turn() === "w" ? "black" : "white"
+                winner: winner,
+                turn : this.board.turn() === "w" ? "black" : "white",
+                payload: move
+            }))
+            this.player2.send(JSON.stringify({
+                type: GAME_OVER,
+                winner: winner,
+                turn : this.board.turn() === "w" ? "black" : "white",
+                payload: move
             }))
             return
         }

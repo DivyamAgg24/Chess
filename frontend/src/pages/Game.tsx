@@ -15,16 +15,19 @@ export const Game = () => {
     const [board, setBoard] = useState(chess.board())
     const [started, setStarted] = useState(false)
     const [playerColor, setPlayerColor] = useState("")
+    const [gameOver, setGameOver] = useState(false)
+    const [winner, setWinner] = useState("")
 
     useEffect(() => {
-        if (!socket){
+        if (!socket) {
             return 
         }
 
         socket.onmessage = (event) => {
             const message = JSON.parse(event.data)
-            console.log(message)
-            switch (message.type){
+            console.log("Received message:", message)
+            
+            switch (message.type) {
                 case INIT_GAME:
                     console.log("Game initialised")
                     const newChess = new Chess()
@@ -32,34 +35,79 @@ export const Game = () => {
                     setBoard(newChess.board())
                     setPlayerColor(message.payload)
                     setStarted(true)
+                    setGameOver(false)
+                    setWinner("")
                     break
+                    
                 case MOVE:
                     const move = message.payload
                     console.log("Received move:", move)
-                    console.log("Turn before move:", chess.turn())
                     
                     setChess(prevChess => {
-                        const newChess = new Chess(prevChess.fen())
-                        const moveResult = newChess.move(move)
-                        
-                        if (moveResult) {
-                            console.log("Move applied successfully")
-                            console.log("Turn after move:", newChess.turn())
-                            setBoard(newChess.board())
-                            return newChess
-                        } else {
-                            console.error("Invalid move:", move)
+                        try {
+                            const newChess = new Chess(prevChess.fen())
+                            
+                            // Handle different move formats
+                            let moveResult;
+                            if (typeof move === 'string') {
+                                moveResult = newChess.move(move)
+                            } else if (move && typeof move === 'object') {
+                                // For object moves, ensure proper format
+                                const moveObj = {
+                                    from: move.from,
+                                    to: move.to,
+                                    ...(move.promotion && { promotion: move.promotion })
+                                }
+                                console.log("Attempting move with object:", moveObj)
+                                moveResult = newChess.move(moveObj)
+                            }
+                            
+                            console.log("moveResult: ", moveResult)
+                            
+                            if (moveResult) {
+                                console.log("Move applied successfully")
+                                setBoard(newChess.board())
+                                return newChess
+                            } else {
+                                console.error("Invalid move received from server:", move)
+                                return prevChess
+                            }
+                        } catch (error) {
+                            console.error("Error applying move:", error, "Move was:", move)
                             return prevChess
                         }
                     })
                     break
+                    
                 case GAME_OVER:
-                    console.log("Game over")
-                    window.alert("Game over " + message.payload + " wins")
+                    console.log("Game over received:", message)
+                    
+                    // Don't try to apply the final move again - it should already be applied
+                    // The backend sends the final move in GAME_OVER just for reference
+                    setGameOver(true)
+                    setWinner(message.winner || message.turn)
+                    
+                    // Show game over message after state update
+                    setTimeout(() => {
+                        window.alert(`Game Over! ${message.winner || message.turn} wins!`)
+                    }, 100)
                     break
+                    
+                default:
+                    console.log("Unknown message type:", message.type)
             }
         }
+
+        socket.onerror = (error) => {
+            console.error("WebSocket error:", error)
+        }
+
+        socket.onclose = (event) => {
+            console.log("WebSocket closed:", event)
+            setStarted(false)
+        }
     }, [socket])
+
 
     if (!socket){
         return <div>
