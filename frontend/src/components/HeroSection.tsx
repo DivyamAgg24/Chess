@@ -43,7 +43,7 @@ const HeroSection = () => {
                         transition={{ duration: 0.8, delay: 0.3 }}
                     >
                         <Button
-                            onClick={() => navigate("/game")}
+                            
                             className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-primary/90 px-12 py-6 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
                         >
                             Play Online

@@ -48,7 +48,7 @@ const CTASection = () => {
                             <Button
                                 size="lg"
                                 className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                                onClick={() => navigate('/game')}
+                                
                             >
                                 Play Online Now
                                 <ArrowRight className="ml-2 w-5 h-5" />
