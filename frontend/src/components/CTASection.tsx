@@ -1,10 +1,8 @@
 import { motion } from "framer-motion";
 import { Button } from "../components/Button";
 import { ArrowRight, Crown, Zap } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const CTASection = () => {
-    const navigate = useNavigate();
 
     return (
         <section className="py-20 px-4 bg-gradient-to-br from-primary/10 to-accent/10 relative overflow-hidden">

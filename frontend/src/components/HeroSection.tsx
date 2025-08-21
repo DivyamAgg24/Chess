@@ -1,10 +1,8 @@
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import { Button } from "./Button";
 import chessBoard from "../assets/chess-board-hero.jpg";
 
 const HeroSection = () => {
-    const navigate = useNavigate();
 
     return (
         <section className="min-h-screen flex items-center justify-center px-4 py-20 bg-background text-foreground">
