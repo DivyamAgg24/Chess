@@ -6,7 +6,7 @@ import { Login } from './pages/Login'
 
 function App() {
 
-    return <div className='bg-stone-700 h-screen overflow-y-auto'>
+    return <div className='h-screen overflow-y-auto'>
         <BrowserRouter basename='/'>
             <Routes>
                 <Route path="/" element={<Landing />}></Route>
