@@ -111,7 +111,6 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                     {(playerColor === "black" ? [...row].reverse() : row).map((square, j) => {
                         const actualColumnIndex = playerColor === "black" ? (7 - j) : j;
 
-                        // Square representation should ONLY be the coordinate (e.g., "d6", "c6")
                         const squareRepresentation = String.fromCharCode(97 + (actualColumnIndex % 8)) + "" + (8 - (actualRowIndex % 8)) as Square;
 
                         // Check if this square is a valid move destination
@@ -120,10 +119,6 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                                 const destSquare = extractDestinationSquare(move);
                                 return destSquare === squareRepresentation;
                             } 
-                            // else {
-                            //     // For Move objects, check the 'to' property
-                            //     return move.to === squareRepresentation;
-                            // }
                         });
 
                         const canSelectPiece = square &&
@@ -154,7 +149,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                                             setTo(squareRepresentation);
                                             console.log("Making move:", { from, to: squareRepresentation });
                                             
-                                            // Check if this is a promotion move
+                                            // Check if the curret move is a promotion move
                                             if (hasPromotionMove) {
                                                 setPromotionSquare(squareRepresentation);
                                                 setShowPromotionDialog(true);
@@ -192,7 +187,6 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                             >
                                 <div className={`h-full w-full ${from === squareRepresentation ? 'bg-lime-500' : ''} ${canSelectPiece ? 'cursor-pointer' : ''}`}>
                                     
-                                    {/* Promotion Dialog */}
                                     {showPromotionDialog && promotionSquare === squareRepresentation && (
                                         <div className="absolute top-0 left-0 z-10 flex flex-col border bg-white text-black text-xs">
                                             <button onClick={(e) => {e.stopPropagation(); handlePromotion('q')}} className="p-1 hover:bg-gray-200">Queen</button>

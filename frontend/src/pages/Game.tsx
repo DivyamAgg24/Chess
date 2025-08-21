@@ -15,8 +15,16 @@ export const Game = () => {
     const [board, setBoard] = useState(chess.board())
     const [started, setStarted] = useState(false)
     const [playerColor, setPlayerColor] = useState("")
-    const [gameOver, setGameOver] = useState(false)
-    const [winner, setWinner] = useState("")
+    const [_gameOver, setGameOver] = useState(false)
+    const [_winner, setWinner] = useState("")
+    const [piecesCaptured, setPiecesCaptured] = useState<String[]>([])
+    const [lastProcessedMove, setLastProcessedMove] = useState<string | null>(null)
+
+
+    useEffect(() => {
+        console.log("Pieces captured: ", piecesCaptured)
+    }, [piecesCaptured])
+
 
     useEffect(() => {
         if (!socket) {
@@ -43,6 +51,14 @@ export const Game = () => {
                     const move = message.payload
                     console.log("Received move:", move)
                     
+                    // Create a unique identifier for this move to prevent duplicates
+                    const moveId = `${move.from}-${move.to}-${move.promotion || ''}`;
+                    
+                    if (lastProcessedMove === moveId) {
+                        console.log("Duplicate move ignored:", moveId);
+                        return;
+                    }
+                    
                     setChess(prevChess => {
                         try {
                             const newChess = new Chess(prevChess.fen())
@@ -67,6 +83,10 @@ export const Game = () => {
                             if (moveResult) {
                                 console.log("Move applied successfully")
                                 setBoard(newChess.board())
+                                setLastProcessedMove(moveId)
+                                if(moveResult.captured){
+                                    setPiecesCaptured(pieces => [...pieces, moveResult.captured])
+                                }
                                 return newChess
                             } else {
                                 console.error("Invalid move received from server:", move)
