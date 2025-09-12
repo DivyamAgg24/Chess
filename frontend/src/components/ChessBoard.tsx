@@ -2,14 +2,29 @@ import { Chess, Color, Move, PieceSymbol, Square } from "chess.js";
 import { useEffect, useState } from "react";
 import { MOVE } from "../pages/Game";
 
+const pieceImages: Record<string, string> = {
+    wp: "/pieces/wp.svg",
+    wr: "/pieces/wr.svg",
+    wn: "/pieces/wn.svg",
+    wb: "/pieces/wb.svg",
+    wq: "/pieces/wq.svg",
+    wk: "/pieces/wk.svg",
+    bp: "/pieces/bp.svg",
+    br: "/pieces/br.svg",
+    bn: "/pieces/bn.svg",
+    bb: "/pieces/bb.svg",
+    bq: "/pieces/bq.svg",
+    bk: "/pieces/bk.svg",
+};
+
 export const ChessBoard = ({ board, chess, socket, playerColor }: {
     board: ({
         square: Square;
         type: PieceSymbol;
         color: Color;
     } | null)[][],
-    chess: Chess, 
-    socket: WebSocket, 
+    chess: Chess,
+    socket: WebSocket,
     playerColor: string
 }) => {
 
@@ -27,7 +42,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
         // Handle captures (e.g., "dxc6" -> "c6")
         if (moveStr.includes('x')) {
             let destSquare = moveStr.split('x')[1];
-            
+
             // Remove check/checkmate symbols
             if (destSquare.includes('+')) {
                 destSquare = destSquare.split('+')[0];
@@ -53,7 +68,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
             }
             return destSquare;
         }
-        
+
         if (moveStr.includes('#')) {
             let destSquare = moveStr.split('#')[0];
             if (destSquare.includes('=')) {
@@ -64,13 +79,13 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
             }
             return destSquare;
         }
-        
+
         // Handle promotion
         if (moveStr.includes("=")) {
             let destSquare = moveStr.split('=')[0];
             return destSquare;
         }
-        
+
         // Handle regular piece moves (e.g., "Qe2" -> "e2")
         if (moveStr.length >= 2) {
             const destSqr = moveStr.slice(-2);
@@ -118,7 +133,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                             if (typeof move === "string") {
                                 const destSquare = extractDestinationSquare(move);
                                 return destSquare === squareRepresentation;
-                            } 
+                            }
                         });
 
                         const canSelectPiece = square &&
@@ -135,7 +150,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                         });
 
                         return (
-                            <div key={j} 
+                            <div key={j}
                                 onClick={() => {
                                     if (!from) {
                                         if (canSelectPiece) {
@@ -148,7 +163,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                                         if (isValidMove) {
                                             setTo(squareRepresentation);
                                             console.log("Making move:", { from, to: squareRepresentation });
-                                            
+
                                             // Check if the curret move is a promotion move
                                             if (hasPromotionMove) {
                                                 setPromotionSquare(squareRepresentation);
@@ -183,27 +198,27 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                                         }
                                     }
                                 }}
-                                className={`w-16 h-16 ${(actualRowIndex + actualColumnIndex) % 2 === 0 ? 'bg-green-600' : 'bg-amber-200'} relative`}
+                                className={`w-16 h-16 ${(actualRowIndex + actualColumnIndex) % 2 === 0 ? 'bg-[#3f822b]' : 'bg-[#d2cea2]'} relative`}
                             >
                                 <div className={`h-full w-full ${from === squareRepresentation ? 'bg-lime-500' : ''} ${canSelectPiece ? 'cursor-pointer' : ''}`}>
-                                    
+
                                     {showPromotionDialog && promotionSquare === squareRepresentation && (
                                         <div className="absolute top-0 left-0 z-10 flex flex-col border bg-white text-black text-xs">
-                                            <button onClick={(e) => {e.stopPropagation(); handlePromotion('q')}} className="p-1 hover:bg-gray-200">Queen</button>
-                                            <button onClick={(e) => {e.stopPropagation(); handlePromotion('r')}} className="p-1 hover:bg-gray-200">Rook</button>
-                                            <button onClick={(e) => {e.stopPropagation(); handlePromotion('b')}} className="p-1 hover:bg-gray-200">Bishop</button>
-                                            <button onClick={(e) => {e.stopPropagation(); handlePromotion('n')}} className="p-1 hover:bg-gray-200">Knight</button>
+                                            <button onClick={(e) => { e.stopPropagation(); handlePromotion('q') }} className="p-1 hover:bg-gray-200">Queen</button>
+                                            <button onClick={(e) => { e.stopPropagation(); handlePromotion('r') }} className="p-1 hover:bg-gray-200">Rook</button>
+                                            <button onClick={(e) => { e.stopPropagation(); handlePromotion('b') }} className="p-1 hover:bg-gray-200">Bishop</button>
+                                            <button onClick={(e) => { e.stopPropagation(); handlePromotion('n') }} className="p-1 hover:bg-gray-200">Knight</button>
                                         </div>
                                     )}
-                                    
+
                                     <div className="flex flex-col justify-center h-full w-full">
                                         <div className={`flex justify-center rounded-full`}>
                                             <div className={`flex flex-col justify-center p-3 ${isValidMove ? 'bg-black/20 rounded-full' : ''}`}>
                                                 {square ? (
-                                                    <img 
-                                                        src={`${square.color === 'b' ? `./${square.type}.png` : `./${square?.type.toUpperCase()} copy.png`}`} 
-                                                        className="w-6" 
-                                                        alt={`${square.color} ${square.type}`}
+                                                    <img
+                                                        src={pieceImages[square.color + square.type]}
+                                                        className="w-12 h-12"
+                                                        alt={`${square.color}${square.type}`}
                                                     />
                                                 ) : null}
                                             </div>

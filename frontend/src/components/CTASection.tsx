@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { Button } from "../components/Button";
 import { ArrowRight, Crown, Zap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const CTASection = () => {
-
+    const navigate = useNavigate()
     return (
         <section className="py-20 px-4 bg-gradient-to-br from-primary/10 to-accent/10 relative overflow-hidden">
             <div className="absolute inset-0 bg-grid-primary/5 bg-[size:30px_30px]" />
@@ -46,7 +47,7 @@ const CTASection = () => {
                             <Button
                                 size="lg"
                                 className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                                
+                                onClick={() => navigate("/login")}
                             >
                                 Play Online Now
                                 <ArrowRight className="ml-2 w-5 h-5" />

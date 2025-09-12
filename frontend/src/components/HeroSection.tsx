@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { Button } from "./Button";
 import chessBoard from "../assets/chess-board-hero.jpg";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
-
+    const navigate = useNavigate()
     return (
         <section className="min-h-screen flex items-center justify-center px-4 py-20 bg-background text-foreground">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -41,7 +42,7 @@ const HeroSection = () => {
                         transition={{ duration: 0.8, delay: 0.3 }}
                     >
                         <Button
-                            
+                            onClick={() => navigate("/login")}
                             className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-primary/90 px-12 py-6 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
                         >
                             Play Online
