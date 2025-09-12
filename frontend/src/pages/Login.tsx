@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../components/Button"
 import { useAuth } from "../contexts/AuthContext"
@@ -7,9 +6,8 @@ import axios from "axios"
 const BACKEND_URL = import.meta.env.VITE_HTTP_BACKEND_URL
 console.log(BACKEND_URL)
 export const Login = () => {
-    const [username, setUsername] = useState('')
     const navigate = useNavigate()
-    const { user, login, loading} = useAuth();
+    const {login} = useAuth();
 
     const guestLogin = async () => {
         const response = await axios.post(`${BACKEND_URL}/auth/guest`, {
