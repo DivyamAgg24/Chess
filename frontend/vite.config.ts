@@ -8,13 +8,15 @@ export default defineConfig({
         react(),
         tailwindcss()
     ],
-    // server: {
-    //     host: '0.0.0.0',
-    //     port: 3000,
-    //     proxy: {
-    //         '/api1': 'ws://localhost:8080',
-    //         '/api2': 'http://localhost:8000'
+    server: {
+        proxy: {
+            // '/api1': 'ws://localhost:8080',
+            '/api':{
+                target: 'http://localhost:8000',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api/, '')
+            }
 
-    //     }
-    // },
+        }
+    },
 })

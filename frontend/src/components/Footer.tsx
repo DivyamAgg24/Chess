@@ -98,7 +98,7 @@ const Footer = () => {
                     className="border-t border-border pt-8 text-center"
                 >
                     <p className="text-muted-foreground">
-                        © 2025 ChessMaster. All rights reserved. Made with ♟️ for chess enthusiasts worldwide.
+                        © 2025 ChessMaster. All rights reserved. Made by Divyam for chess enthusiasts worldwide.
                     </p>
                 </motion.div>
             </div>

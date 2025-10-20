@@ -3,11 +3,29 @@ import { Button } from "../components/Button"
 import { ChessBoard } from "../components/ChessBoard"
 import { useSocket } from "../hooks/useSocket"
 import { Chess } from "chess.js"
+import { useAuth } from "../contexts/AuthContext"
+import { useGameState } from "../hooks/useGameState"
+import { useGameSocket } from "../hooks/useGameSocket"
 
 export const INIT_GAME = "init_game"
 export const MOVE = "move"
 export const GAME_OVER = "game_over"
 export const REJOIN_GAME = "rejoin_game"
+
+const pieceImages: Record<string, string> = {
+    wp: "/pieces/wp.svg",
+    wr: "/pieces/wr.svg",
+    wn: "/pieces/wn.svg",
+    wb: "/pieces/wb.svg",
+    wq: "/pieces/wq.svg",
+    wk: "/pieces/wk.svg",
+    bp: "/pieces/bp.svg",
+    br: "/pieces/br.svg",
+    bn: "/pieces/bn.svg",
+    bb: "/pieces/bb.svg",
+    bq: "/pieces/bq.svg",
+    bk: "/pieces/bk.svg",
+};
 
 
 export const Game = () => {
@@ -16,179 +34,111 @@ export const Game = () => {
     const [board, setBoard] = useState(chess.board())
     const [started, setStarted] = useState(false)
     const [playerColor, setPlayerColor] = useState("")
-    const [_gameOver, setGameOver] = useState(false)
-    const [_winner, setWinner] = useState("")
-    const [piecesCaptured, setPiecesCaptured] = useState<String[]>([])
-    const [lastProcessedMove, setLastProcessedMove] = useState<string | null>(null)
-    const [gameId, setGameId] = useState<String | null>(null);
+    const [gameOver, setGameOver] = useState(false)
+    const [winner, setWinner] = useState("")
+    const [piecesCaptured, setPiecesCaptured] = useState<{ white: string[], black: string[] }>({ white: [], black: [] })
+    const [gameId, setGameId] = useState<string | null>(null);
+    const { user } = useAuth();
+    const [opponentName, setOpponentName] = useState("")
 
 
     useEffect(() => {
         console.log("Pieces captured: ", piecesCaptured)
+        console.log("Player color:" + playerColor)
     }, [piecesCaptured])
 
 
-    useEffect(() => {
-        if (started && gameId) {
-            sessionStorage.setItem('chess-game-state', JSON.stringify({
-                started,
-                playerColor,
-                fen: chess.fen(),
-                gameId: gameId,
-                userId: localStorage.getItem('userId') // Store userId
-            }))
-        }
-    }, [started, playerColor, chess, gameId])
+    useGameState({
+        socket,
+        gameId,
+        setGameId
+    })
+
+    useGameSocket({
+        socket,
+        setChess,
+        setBoard,
+        setStarted,
+        setPlayerColor,
+        setGameOver,
+        setWinner,
+        setPiecesCaptured,
+        setGameId,
+        setOpponentName
+    })
 
 
-    useEffect(() => {
-        const savedState = sessionStorage.getItem('chess-game-state')
-        if (savedState) {
-            const { started, playerColor, fen } = JSON.parse(savedState)
-            const restoredChess = new Chess(fen)
-            setChess(restoredChess)
-            setBoard(restoredChess.board())
-            setStarted(started)
-            setPlayerColor(playerColor)
-        }
-    }, [])
-
-    useEffect(() => {
-        if (!socket) {
-            return
-        }
-
-        socket.onmessage = (event) => {
-            const message = JSON.parse(event.data)
-            console.log("Received message:", message)
-
-            switch (message.type) {
-                case INIT_GAME:
-                    console.log("Game initialised")
-                    const newChess = new Chess()
-                    setGameId(message.gameId)
-                    sessionStorage.setItem('userId', message.userId)
-
-                    setChess(newChess)
-                    setBoard(newChess.board())
-                    setPlayerColor(message.payload)
-                    setStarted(true)
-                    setGameOver(false)
-                    setWinner("")
-                    break
-
-                case MOVE:
-                    const move = message.payload
-                    console.log("Received move:", move)
-
-                    const moveId = `${move.from}-${move.to}-${move.promotion || ''}`;
-
-                    if (lastProcessedMove === moveId) {
-                        console.log("Duplicate move ignored:", moveId);
-                        return;
-                    }
-
-                    setChess(prevChess => {
-                        try {
-                            const newChess = new Chess(prevChess.fen())
-                            let moveResult;
-                            if (typeof move === 'string') {
-                                moveResult = newChess.move(move)
-                            } else if (move && typeof move === 'object') {
-                                // For object moves, ensure proper format
-                                const moveObj = {
-                                    from: move.from,
-                                    to: move.to,
-                                    ...(move.promotion && { promotion: move.promotion })
-                                }
-                                console.log("Attempting move with object:", moveObj)
-                                moveResult = newChess.move(moveObj)
-                            }
-
-                            console.log("moveResult: ", moveResult)
-
-                            if (moveResult) {
-                                console.log("Move applied successfully")
-                                setBoard(newChess.board())
-                                setLastProcessedMove(moveId)
-                                if (moveResult.captured) {
-                                    setPiecesCaptured(pieces => [...pieces, moveResult.captured])
-                                }
-                                return newChess
-                            } else {
-                                console.error("Invalid move received from server:", move)
-                                return prevChess
-                            }
-                        } catch (error) {
-                            console.error("Error applying move:", error, "Move was:", move)
-                            return prevChess
-                        }
-                    })
-                    break
-
-                case REJOIN_GAME:
-                    console.log("Game rejoined")
-                    setPlayerColor(message.payload)
-                    setBoard(message.board)
-                    break
-
-                case GAME_OVER:
-                    console.log("Game over received:", message)
-
-                    setGameOver(true)
-                    setWinner(message.winner || message.turn)
-
-                    setTimeout(() => {
-                        window.alert(`Game Over! ${message.winner || message.turn} wins!`)
-                    }, 100)
-                    break
-
-                default:
-                    console.log("Unknown message type:", message.type)
-            }
-        }
-
-        socket.onerror = (error) => {
-            console.error("WebSocket error:", error)
-        }
-
-        socket.onclose = (event) => {
-            console.log("WebSocket closed:", event)
-            setStarted(false)
-        }
-    }, [socket])
-
+    const handleStartGame = () => {
+        const userId = user?.id
+        socket?.send(JSON.stringify({
+            type: INIT_GAME,
+            userId: userId
+        }))
+    }
 
     if (!socket) {
-        return <div>
-            Connecting...
-        </div>
+        return null
     }
-    return <div className="flex justify-center max-h-screen h-screen overflow-y-auto">
-        <div className="max-w-screen-lg w-full pt-8">
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-                <div className="col-span-4">
-                    <ChessBoard board={board} chess={chess} socket={socket} playerColor={playerColor} />
-                </div>
-                <div className="col-span-2">
-                    {!started && <Button onClick={() => {
-                        const userId = sessionStorage.getItem("userId")
-                        socket.send(JSON.stringify({
-                            type: INIT_GAME,
-                            userId: userId
-                        }))
-                    }}
-                        className="text-[hsl(var(--primary-foreground))] text-lg" size={"lg"}>
-                        Play
-                    </Button>}
-                </div>
-                <div>
-                    {started && <div>
-                        <div>Your color is {playerColor}</div>
-                        <div></div>
-                    </div>}
-                </div>
-            </div>
+
+    return <div className="flex justify-around max-h-screen h-screen overflow-y-auto">
+        <div className="flex flex-col">
+            {!started ?
+                (<>
+                    <div className="pt-5 text-primary text-xl font-bold flex items-center gap-x-2">
+                        <div className="">
+                            <img src="/user-image.007dad08.svg" className="aspect-square h-7 rounded" />
+                        </div>
+                        <div>{user?.name}</div>
+                    </div>
+                    <div className="max-w-screen-lg w-full pt-12">
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-20">
+                            <div className={`${started ? "col-span-5" : " col-span-4"} shadow-xl`}>
+                                <ChessBoard board={board} chess={chess} socket={socket} playerColor={playerColor} />
+                            </div>
+                            <div className="col-span-2">
+                                <Button onClick={handleStartGame}
+                                    className="text-[hsl(var(--primary-foreground))] text-lg" size={"lg"}>
+                                    Play
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </>) :
+                (<>
+                    <div className="max-w-screen-lg w-full pt-5">
+                        <div className="pb-5 text-primary font-bold flex items-center gap-x-3">
+                            <div className="shrink-0">
+                                <img src="/user-image.007dad08.svg" className="aspect-square h-10 rounded" />
+                            </div>
+                            <div className="flex flex-col min-h-[3rem]">
+                                <div className="text-lg leading-tight">{opponentName}</div>
+                                <div className="text-base leading-tight flex">
+                                    {piecesCaptured && playerColor === "white" ? (piecesCaptured.black || []).map((piece, index)=> <img src={pieceImages['b' + piece]} className="h-5"/> ): (piecesCaptured.white || []).map((piece, index)=> <img src={pieceImages['w' + piece]} className="h-5"/> )}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-20">
+                            <div className="col-span-4 shadow-xl">
+                                <ChessBoard board={board} chess={chess} socket={socket} playerColor={playerColor} />
+                            </div>
+                        </div>
+                        <div className="pt-5 text-primary font-bold flex items-center gap-x-3">
+                            <div className="shrink-0">
+                                <img src="/user-image.007dad08.svg" className="aspect-square h-10 rounded" />
+                            </div>
+                            <div className="flex flex-col min-h-[3rem]">
+                                <div className="text-lg leading-tight">
+                                    {user?.name}
+                                </div>
+                                <div className="text-base leading-tight flex">
+                                    {piecesCaptured && playerColor === "white" ? (piecesCaptured.white || []).map((piece, index)=> <img src={pieceImages['w' + piece]} className="h-5"/> ) : (piecesCaptured.black || []).map((piece, index)=> <img src={pieceImages['b' + piece]} className="h-5"/> )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>)
+            }
+
         </div>
     </div>
 }

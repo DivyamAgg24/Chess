@@ -25,7 +25,7 @@ router.post('/guest', async (req, res, next) => {
         req.login(user, (err) => {
             if (err) return next(err);
 
-            res.json({
+            res.status(200).json({
                 message: "Guest user created and logged in",
                 user,
             });
@@ -39,6 +39,7 @@ router.get('/google', (req, res, next) => {
     try {
         passport.authenticate('google', {
             scope: ['profile', 'email'],
+            prompt: 'select_account'
         })(req, res, next);
     } catch (error) {
         next(error); // Pass errors to error-handling middleware

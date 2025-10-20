@@ -35,7 +35,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
     const [promotionSquare, setPromotionSquare] = useState<Square | null>(null);
 
     useEffect(() => {
-        console.log("Moves ", moves);
+        console.log("Reloaded ", moves);
     }, [moves]);
 
     const extractDestinationSquare = (moveStr: string): string => {

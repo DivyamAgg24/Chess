@@ -26,11 +26,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null)
-    const [loading, setLoading] = useState<boolean>(false)
-
+    const [loading, setLoading] = useState<boolean>(true)
+    useEffect(() => {
+        console.log(user)
+    }, [user])
     const checkAuth = async () => {
         try {
-            const res = await axios.get<User>(`${import.meta.env.VITE_API_URL}/auth/me`, {
+            setLoading(true)
+            const res = await axios.get<User>(`/api/auth/me`, {
                 withCredentials: true, // important for cookies
             });
             setUser(res.data);
@@ -52,9 +55,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log(window.location.href)
     }
 
-    const logout = () => {
-        setUser(null);
-        window.location.href = `${import.meta.env.VITE_HTTP_BACKEND_URL}/auth/logout`;
+    const logout = async () => {
+        try {
+            await axios.post(
+                `${import.meta.env.VITE_HTTP_BACKEND_URL}/auth/logout`,
+                {},
+                { withCredentials: true }
+            );
+            setUser(null);
+            window.location.href = "/"; // redirect to homepage
+        } catch (err) {
+            console.error("Logout failed:", err);
+        }
     };
 
     const value: AuthContextType = {

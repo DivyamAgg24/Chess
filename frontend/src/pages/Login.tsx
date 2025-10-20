@@ -7,15 +7,20 @@ const BACKEND_URL = import.meta.env.VITE_HTTP_BACKEND_URL
 console.log(BACKEND_URL)
 export const Login = () => {
     const navigate = useNavigate()
-    const {login} = useAuth();
+    const { login, refreshUser } = useAuth();
 
     const guestLogin = async () => {
-        const response = await axios.post(`${BACKEND_URL}/auth/guest`, {
-            credentials: "include",
-        })
-        const {user} = response.data
-        console.log("User", user)
-        navigate("/game")
+        try {
+            const response = await axios.post(`/api/auth/guest`, {
+                withCredentials: true
+            })
+            if (response.status === 200) {
+                await refreshUser()
+                navigate("/game")
+            }
+        } catch (error) {
+            console.error("Error creating guest account:", error)
+       }
     }
     return <div className="flex h-full justify-center bg-background text-foreground">
         <div className="flex flex-col justify-center ">
