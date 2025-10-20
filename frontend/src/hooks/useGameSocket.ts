@@ -78,24 +78,6 @@ export const useGameSocket = ({
                     }
                     break
 
-                // case REJOIN_GAME:
-                //     console.log("Game rejoined")
-                //     console.log("mesage: " + JSON.stringify(message))
-                //     if (message.gameState && message.gameState.board) {
-                //         // const restoredChess = new Chess(message.gameState.fen)
-                //         // setChess(restoredChess)
-                //         setBoard(message.gameState.board)
-                //         setPlayerColor(message.payload)
-                //         setStarted(true)
-                //         setGameId(message.gameId)
-                //         console.log("started set to true and board set")
-                //         // Restore captured pieces if provided
-                //         if (message.gameState.capturedPieces) {
-                //             setPiecesCaptured(message.gameState.capturedPieces)
-                //         }
-                //     }
-                //     break
-
                 case GAME_OVER:
                     console.log("Game over received:", message)
                     setGameOver(true)
