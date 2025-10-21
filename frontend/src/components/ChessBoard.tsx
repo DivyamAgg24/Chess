@@ -17,7 +17,7 @@ const pieceImages: Record<string, string> = {
     bk: "/pieces/bk.svg",
 };
 
-export const ChessBoard = ({ board, chess, socket, playerColor }: {
+export const ChessBoard = ({ board, chess, socket, playerColor, canMove }: {
     board: ({
         square: Square;
         type: PieceSymbol;
@@ -25,7 +25,8 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
     } | null)[][],
     chess: Chess,
     socket: WebSocket,
-    playerColor: string
+    playerColor: string,
+    canMove?: boolean
 }) => {
 
     const [from, setFrom] = useState<Square | null>(null);
@@ -33,10 +34,6 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
     const [moves, setMoves] = useState<String[] | Move[] | null>(null);
     const [showPromotionDialog, setShowPromotionDialog] = useState(false);
     const [promotionSquare, setPromotionSquare] = useState<Square | null>(null);
-
-    useEffect(() => {
-        console.log("Reloaded ", moves);
-    }, [moves]);
 
     const extractDestinationSquare = (moveStr: string): string => {
         // Handle captures (e.g., "dxc6" -> "c6")
@@ -100,7 +97,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
     };
 
     const handlePromotion = (piece: string) => {
-        if (from && promotionSquare) {
+        if (from && promotionSquare && canMove) {
             socket.send(JSON.stringify({
                 type: MOVE,
                 move: {
@@ -153,7 +150,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                             <div key={j}
                                 onClick={() => {
                                     if (!from) {
-                                        if (canSelectPiece) {
+                                        if (canMove && canSelectPiece) {
                                             console.log("Selected square:", squareRepresentation);
                                             const possibleMoves = chess.moves({ square: squareRepresentation });
                                             setMoves(possibleMoves);
@@ -169,13 +166,15 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                                                 setPromotionSquare(squareRepresentation);
                                                 setShowPromotionDialog(true);
                                             } else {
-                                                socket.send(JSON.stringify({
-                                                    type: MOVE,
-                                                    move: {
-                                                        from,
-                                                        to: squareRepresentation
-                                                    }
-                                                }));
+                                                if (canMove) {
+                                                    socket.send(JSON.stringify({
+                                                        type: MOVE,
+                                                        move: {
+                                                            from,
+                                                            to: squareRepresentation
+                                                        }
+                                                    }));
+                                                }
                                                 setFrom(null);
                                                 setMoves(null);
                                                 setTo(null);
@@ -198,7 +197,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor }: {
                                         }
                                     }
                                 }}
-                                className={`w-16 h-16 ${(actualRowIndex + actualColumnIndex) % 2 === 0 ? 'bg-[#3f822b]' : 'bg-[#d2cea2]'} relative`}
+                                className={`w-15 h-15 ${(actualRowIndex + actualColumnIndex) % 2 === 0 ? 'bg-[#3f822b]' : 'bg-[#d2cea2]'} relative`}
                             >
                                 <div className={`h-full w-full ${from === squareRepresentation ? 'bg-lime-500' : ''} ${canSelectPiece ? 'cursor-pointer' : ''}`}>
 

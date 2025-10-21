@@ -2,7 +2,7 @@ import WebSocket from "ws"
 import { Chess } from "chess.js"
 import { GAME_OVER, INIT_GAME, MOVE } from "./messages"
 import { db } from "./db"
-import { GameStatus, TimeControl } from "@prisma/client"
+import { GameStatus, TimeControl, GameResult } from "@prisma/client"
 
 interface Move {
     from: string,
@@ -15,6 +15,16 @@ export class Game {
     private player2: WebSocket
     private board: Chess
     private moves: Move[]
+    private moveHistory: Array<{
+        moveNumber: number,
+        from: string,
+        to: string,
+        before: string,
+        after: string,
+        san?: string,
+        captured?: string,
+        timeTaken?: number
+    }> = []
     private gameId!: string
     private player1Id: string
     private player2Id: string
@@ -22,7 +32,8 @@ export class Game {
     public player2Name: string | null = null
     public capturedByWhite: string[] = []
     public capturedByBlack: string[] = []
-
+    private previousFen: string
+    private moveTime: number = 0
     constructor(player1: WebSocket, player1Id: string, player2: WebSocket, player2Id: string) {
         this.player1 = player1
         this.player1Id = player1Id
@@ -31,6 +42,7 @@ export class Game {
         this.board = new Chess()
         this.moves = []
         this.initializeGame()
+        this.previousFen = this.board.fen()
     }
 
 
@@ -68,7 +80,8 @@ export class Game {
             })
 
             this.gameId = game.id
-            
+            this.moveTime = Date.now()
+
             // Send initialization messages to both players
             this.player1Name = player1Data.name!
             this.player2Name = player2Data.name!
@@ -147,55 +160,141 @@ export class Game {
         if (this.moves.length % 2 == 1 && socket !== this.player2) {
             return
         }
+
+        const beforeFen = this.board.fen()
+
         try {
-            let moveResult;
-            moveResult = this.board.move(move)
+            let moveResult = this.board.move(move)
+
+            if (!moveResult) {
+                return
+            }
+
+            const afterFen = this.board.fen()
+            const now = Date.now()
+
+            this.moveHistory.push({
+                moveNumber: this.moveHistory.length + 1,
+                from: moveResult.from,
+                to: moveResult.to,
+                before: beforeFen,
+                after: afterFen,
+                san: moveResult.san,
+                captured: moveResult.captured,
+                timeTaken: (now - this.moveTime) / 1000
+            })
+
+            this.moveTime = now
+
             this.moves.push(move)
             console.log(this.board.ascii())
+
             if (moveResult && moveResult.captured) {
-            
-            if (this.board.turn() === 'b') { 
-                this.capturedByWhite.push(moveResult.captured)
-            } else { 
-                this.capturedByBlack.push(moveResult.captured)
+                if (this.board.turn() === 'b') {
+                    this.capturedByWhite.push(moveResult.captured)
+                } else {
+                    this.capturedByBlack.push(moveResult.captured)
+                }
             }
-        }
+
+            this.player1.send(JSON.stringify({
+                type: MOVE,
+                payload: move,
+                moveHistory: this.moveHistory,
+                capturedByWhite: this.capturedByWhite,
+                capturedByBlack: this.capturedByBlack
+            }))
+            this.player2.send(JSON.stringify({
+                type: MOVE,
+                payload: move,
+                moveHistory: this.moveHistory,
+                capturedByWhite: this.capturedByWhite,
+                capturedByBlack: this.capturedByBlack
+            }))
+
+            if (this.board.isDraw()) {
+                this.handleDraw(move)
+                return
+            }
+
+            if (this.board.isCheckmate()) {
+                this.handleCheckmate(move)
+                return
+            }
         } catch (e) {
             console.log(e)
             return
         }
-        this.player2.send(JSON.stringify({
-            type: MOVE,
-            payload: move,
-            capturedByWhite: this.capturedByWhite,
-            capturedByBlack: this.capturedByBlack
-        }))
+    }
+
+    private async handleCheckmate(move: Move) {
+        let winner = this.board.turn() === "w" ? "black" : "white"
+
+        await this.saveGameToDatabase(winner)
 
         this.player1.send(JSON.stringify({
-            type: MOVE,
-            payload: move,
-            capturedByWhite: this.capturedByWhite,
-            capturedByBlack: this.capturedByBlack
+            type: GAME_OVER,
+            winner: winner,
+            turn: this.board.turn() === "w" ? "black" : "white",
+            payload: move
         }))
 
-        if (this.board.isGameOver()) {
-            let winner = this.board.turn() === "w" ? "black" : "white";
-            this.player1.send(JSON.stringify({
-                type: GAME_OVER,
-                winner: winner,
-                turn: this.board.turn() === "w" ? "black" : "white",
-                payload: move
-            }))
-            this.player2.send(JSON.stringify({
-                type: GAME_OVER,
-                winner: winner,
-                turn: this.board.turn() === "w" ? "black" : "white",
-                payload: move
-            }))
-            return
+        this.player2.send(JSON.stringify({
+            type: GAME_OVER,
+            winner: winner,
+            turn: this.board.turn() === "w" ? "black" : "white",
+            payload: move
+        }))
+    }
+
+    private async handleDraw(move: Move) {
+
+        await this.saveGameToDatabase("")
+
+        this.player1.send(JSON.stringify({
+            type: GAME_OVER,
+            winner: "draw",
+            turn: this.board.turn() === "w" ? "black" : "white",
+            payload: move
+        }))
+
+        this.player2.send(JSON.stringify({
+            type: GAME_OVER,
+            winner: "draw",
+            turn: this.board.turn() === "w" ? "black" : "white",
+            payload: move
+        }))
+    }
+
+    private async saveGameToDatabase(winner: string) {
+        try {
+            await db.game.update({
+                where: { id: this.gameId },
+                data: {
+                    status: GameStatus.COMPLETED,
+                    result: winner === "white" ? GameResult.WHITE_WINS : winner === "black" ? GameResult.BLACK_WINS : GameResult.DRAW,
+                    currentFen: this.board.fen(),
+                    endAt: new Date()
+                }
+            })
+
+            if (this.moveHistory.length > 0) {
+                await db.move.createMany({
+                    data: this.moveHistory.map(move => ({
+                        gameId: this.gameId,
+                        moveNumber: move.moveNumber,
+                        from: move.from,
+                        to: move.to,
+                        before: move.before,
+                        after: move.after,
+                        san: move.san || '',
+                        timeTaken: move.timeTaken
+                    }))
+                })
+            }
+            console.log(`Game ${this.gameId} saved with ${this.moveHistory.length} moves`)
+        } catch (error) {
+            console.error("Error saving game to database:", error)
         }
-
-
-
     }
 }

@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react"
-import { Button } from "../components/Button"
+import { Button } from "../components/ui/Button"
 import { ChessBoard } from "../components/ChessBoard"
 import { useSocket } from "../hooks/useSocket"
 import { Chess } from "chess.js"
 import { useAuth } from "../contexts/AuthContext"
 import { useGameState } from "../hooks/useGameState"
 import { useGameSocket } from "../hooks/useGameSocket"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Home, LogOut, User2 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 export const INIT_GAME = "init_game"
 export const MOVE = "move"
@@ -38,13 +40,27 @@ export const Game = () => {
     const [winner, setWinner] = useState("")
     const [piecesCaptured, setPiecesCaptured] = useState<{ white: string[], black: string[] }>({ white: [], black: [] })
     const [gameId, setGameId] = useState<string | null>(null);
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const [opponentName, setOpponentName] = useState("")
+    const [moveHistory, setMoveHistory] = useState<Array<{
+        moveNumber: number,
+        from: string,
+        to: string,
+        before: string,
+        after: string,
+        san?: string,
+        captured?: string,
+        timeTaken?: number
+    }>>([])
+
+    const [currentMoveIndex, setCurrentMoveIndex] = useState<number>(-1)
+    const [isViewingHistory, setIsViewingHistory] = useState(false)
+    const [canMove, setCanMove] = useState(true)
 
 
     useEffect(() => {
         console.log("Pieces captured: ", piecesCaptured)
-        console.log("Player color:" + playerColor)
+        console.log("Move History: ", JSON.stringify(moveHistory))
     }, [piecesCaptured])
 
 
@@ -64,9 +80,14 @@ export const Game = () => {
         setWinner,
         setPiecesCaptured,
         setGameId,
-        setOpponentName
+        setOpponentName,
+        setMoveHistory,
+        setIsViewingHistory,
+        setCanMove,
+        setCurrentMoveIndex
     })
 
+    const navigate = useNavigate()
 
     const handleStartGame = () => {
         const userId = user?.id
@@ -74,6 +95,101 @@ export const Game = () => {
             type: INIT_GAME,
             userId: userId
         }))
+    }
+
+    const goToStartingPosition = () => {
+        setCurrentMoveIndex(-2) // Special value for starting position
+        setIsViewingHistory(true)
+        setCanMove(false)
+        
+        const startChess = new Chess()
+        setChess(startChess)
+        setBoard(startChess.board())
+    }
+
+    const goToPrevMove = () => {
+        if (moveHistory.length === 0) return;
+        let newIndex: number;
+        if (currentMoveIndex === -1) {
+            newIndex = moveHistory.length - 2
+        }
+        else if (currentMoveIndex === -2) {
+            return
+        }
+        else {
+            newIndex = currentMoveIndex - 1
+        }
+
+        if (newIndex < -2) {
+            newIndex = -2
+        }
+        setCurrentMoveIndex(newIndex)
+        setIsViewingHistory(true)
+        setCanMove(false)
+
+        if (newIndex === -2) {
+            const startChess = new Chess()
+            setChess(startChess)
+            setBoard(startChess.board())
+        } else {
+            const targetFen = moveHistory[newIndex].after
+            const historyChess = new Chess(targetFen)
+            setChess(historyChess)
+            setBoard(historyChess.board())
+        }
+    }
+
+
+    const goToNextMove = () => {
+        if (currentMoveIndex === -1 || moveHistory.length === 0) {
+            return // Already at latest
+        }
+        
+        let newIndex: number
+        if (currentMoveIndex === -2) {
+            // At starting position, go to first move
+            newIndex = 0
+        } else {
+            newIndex = currentMoveIndex + 1
+        }
+        
+        if (newIndex >= moveHistory.length - 1) {
+            // Going to latest
+            newIndex = -1
+            setIsViewingHistory(false)
+            setCanMove(true)
+        } else {
+            setIsViewingHistory(true)
+            setCanMove(false)
+        }
+        
+        setCurrentMoveIndex(newIndex)
+        
+        if (newIndex === -1) {
+            // Latest position
+            const latestFen = moveHistory[moveHistory.length - 1].after
+            const latestChess = new Chess(latestFen)
+            setChess(latestChess)
+            setBoard(latestChess.board())
+        } else {
+            const targetFen = moveHistory[newIndex].after
+            const historyChess = new Chess(targetFen)
+            setChess(historyChess)
+            setBoard(historyChess.board())
+        }
+    }
+
+    const goToLatestMove = () => {
+        if (moveHistory.length === 0) return
+        
+        setCurrentMoveIndex(-1)
+        setIsViewingHistory(false)
+        setCanMove(true)
+        
+        const latestFen = moveHistory[moveHistory.length - 1].after
+        const latestChess = new Chess(latestFen)
+        setChess(latestChess)
+        setBoard(latestChess.board())
     }
 
     if (!socket) {
@@ -84,11 +200,21 @@ export const Game = () => {
         <div className="flex flex-col">
             {!started ?
                 (<>
-                    <div className="pt-5 text-primary text-xl font-bold flex items-center gap-x-2">
-                        <div className="">
-                            <img src="/user-image.007dad08.svg" className="aspect-square h-7 rounded" />
+                    <div className="flex pt-5 items-center justify-between">
+                        <div className="text-primary text-xl font-bold flex items-center gap-x-2">
+                            <div className="">
+                                <img src="/user-image.007dad08.svg" className="aspect-square h-7 rounded" />
+                            </div>
+                            <div>{user?.name}</div>
                         </div>
-                        <div>{user?.name}</div>
+                        <div className="flex gap-x-3 items-center">
+                            <Home className="cursor-pointer" onClick={() => navigate("/")} />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-7 cursor-pointer" onClick={() => navigate("/profile")}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+
+                            <Button size={"sm"} variant={"default"} onClick={logout} className="text-xs" ><LogOut /> Log Out</Button>
+                        </div>
                     </div>
                     <div className="max-w-screen-lg w-full pt-12">
                         <div className="grid grid-cols-1 md:grid-cols-6 gap-20">
@@ -113,15 +239,62 @@ export const Game = () => {
                             <div className="flex flex-col min-h-[3rem]">
                                 <div className="text-lg leading-tight">{opponentName}</div>
                                 <div className="text-base leading-tight flex">
-                                    {piecesCaptured && playerColor === "white" ? (piecesCaptured.black || []).map((piece, index)=> <img src={pieceImages['b' + piece]} className="h-5"/> ): (piecesCaptured.white || []).map((piece, index)=> <img src={pieceImages['w' + piece]} className="h-5"/> )}
+                                    {piecesCaptured && playerColor === "white" ? (piecesCaptured.black || []).map((piece, index) => <img key={index} src={pieceImages['b' + piece]} className="h-5" />) : (piecesCaptured.white || []).map((piece, index) => <img key={index} src={pieceImages['w' + piece]} className="h-5" />)}
                                 </div>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-6 gap-20">
                             <div className="col-span-4 shadow-xl">
-                                <ChessBoard board={board} chess={chess} socket={socket} playerColor={playerColor} />
+                                <ChessBoard board={board} chess={chess} socket={socket} playerColor={playerColor} canMove={canMove} />
                             </div>
                         </div>
+
+
+                        {started && !gameOver && moveHistory.length > 0 && (
+                            <div className="flex items-center justify-center gap-2 mt-4">
+                                <Button 
+                                    onClick={goToStartingPosition}
+                                    disabled={currentMoveIndex === -2}
+                                    size="sm"
+                                    variant="outline"
+                                >
+                                    <ChevronsLeft className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                    onClick={goToPrevMove}
+                                    disabled={currentMoveIndex === -2}
+                                    size="sm"
+                                    variant="outline"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <span className="text-sm px-2 min-w-[120px] text-center">
+                                    {currentMoveIndex === -2 
+                                        ? "Starting" 
+                                        : currentMoveIndex === -1
+                                        ? `Move ${moveHistory.length}`
+                                        : `Move ${currentMoveIndex + 1}`
+                                    }
+                                </span>
+                                <Button 
+                                    onClick={goToNextMove}
+                                    disabled={currentMoveIndex === -1}
+                                    size="sm"
+                                    variant="outline"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                    onClick={goToLatestMove}
+                                    disabled={currentMoveIndex === -1}
+                                    size="sm"
+                                    variant="outline"
+                                >
+                                    <ChevronsRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+
                         <div className="pt-5 text-primary font-bold flex items-center gap-x-3">
                             <div className="shrink-0">
                                 <img src="/user-image.007dad08.svg" className="aspect-square h-10 rounded" />
@@ -131,7 +304,7 @@ export const Game = () => {
                                     {user?.name}
                                 </div>
                                 <div className="text-base leading-tight flex">
-                                    {piecesCaptured && playerColor === "white" ? (piecesCaptured.white || []).map((piece, index)=> <img src={pieceImages['w' + piece]} className="h-5"/> ) : (piecesCaptured.black || []).map((piece, index)=> <img src={pieceImages['b' + piece]} className="h-5"/> )}
+                                    {piecesCaptured && playerColor === "white" ? (piecesCaptured.white || []).map((piece, index) => <img key={index} src={pieceImages['w' + piece]} className="h-5" />) : (piecesCaptured.black || []).map((piece, index) => <img key={index} src={pieceImages['b' + piece]} className="h-5" />)}
                                 </div>
                             </div>
                         </div>

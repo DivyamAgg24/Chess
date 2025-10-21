@@ -1,5 +1,5 @@
 import { useAuth } from "../contexts/AuthContext"
-import { Button } from "./Button";
+import { Button } from "./ui/Button"; 
 
 export const Topbar = () => {
     const {logout} = useAuth();

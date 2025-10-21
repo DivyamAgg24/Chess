@@ -6,6 +6,7 @@ import { Login } from './pages/Login'
 import { AuthProvider } from './contexts/AuthContext'
 import { Topbar } from './components/TopBar'
 import { ProtectedRoute } from './lib/ProtectedRoute'
+import Profile from './pages/Profile'
 
 function App() {
 
@@ -16,6 +17,7 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Landing />}></Route>
                     <Route path="/game" element={<ProtectedRoute><Game /></ProtectedRoute>}></Route>
+                    <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>}></Route>
                     <Route path="/login" element={<Login /> } ></Route>
                 </Routes>
             </AuthProvider>

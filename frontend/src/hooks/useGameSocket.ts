@@ -13,6 +13,19 @@ interface UseGameSocketProps {
     setPiecesCaptured: (pieces: { white: string[], black: string[] } | ((prev: { white: string[], black: string[] }) => { white: string[], black: string[] })) => void
     setGameId: (gameId: string | null) => void
     setOpponentName: (opponentName: string) => void
+    setMoveHistory: React.Dispatch<React.SetStateAction<Array<{
+        moveNumber: number,
+        from: string,
+        to: string,
+        before: string,
+        after: string,
+        san?: string,
+        captured?: string,
+        timeTaken?: number
+    }>>>
+    setIsViewingHistory: (isViewing: boolean) => void
+    setCanMove: (canMove: boolean) => void
+    setCurrentMoveIndex: (index: number) => void
 }
 
 export const useGameSocket = ({
@@ -25,7 +38,11 @@ export const useGameSocket = ({
     setWinner,
     setPiecesCaptured,
     setGameId,
-    setOpponentName
+    setOpponentName,
+    setMoveHistory,
+    setIsViewingHistory,
+    setCanMove,
+    setCurrentMoveIndex
 }: UseGameSocketProps) => {
     const [lastProcessedMove, setLastProcessedMove] = useState<string | null>(null)
 
@@ -48,15 +65,19 @@ export const useGameSocket = ({
                     setGameOver(false)
                     setWinner("")
                     setOpponentName(message.opponentName)
+                    setMoveHistory([])
                     break
 
                 case MOVE:
-                    handleMove(message.payload)
+                    handleMove(message.payload, message.moveHistory[message.moveHistory.length-1].after)
                     if (message.capturedByWhite && message.capturedByBlack) {
                         setPiecesCaptured({
                             white: message.capturedByWhite,
                             black: message.capturedByBlack
                         })
+                    }
+                    if (message.moveHistory) {
+                        setMoveHistory(message.moveHistory)
                     }
                     break
 
@@ -108,8 +129,7 @@ export const useGameSocket = ({
             }
         }
 
-        const handleMove = (move: any) => {
-            console.log("Received move:", move)
+        const handleMove = (move: { from: string, to: string, promotion: string }, fen: string) => {
             const moveId = `${move.from}-${move.to}-${move.promotion || ''}`
 
             if (lastProcessedMove === moveId) {
@@ -119,32 +139,38 @@ export const useGameSocket = ({
 
             setChess(prevChess => {
                 try {
-                    const newChess = new Chess(prevChess.fen())
-                    let moveResult
+                    const newChess = new Chess(fen)
+                    setBoard(newChess.board())
+                    setLastProcessedMove(moveId)
+                    setIsViewingHistory(false)
+                    setCanMove(true)
+                    setCurrentMoveIndex(-1)
+                    // let moveResult
+                    // if (typeof move === 'string') {
+                    //     moveResult = newChess.move(move)
+                    // } else if (move && typeof move === 'object') {
+                    //     const moveObj = {
+                    //         from: move.from,
+                    //         to: move.to,
+                    //         ...(move.promotion && { promotion: move.promotion })
+                    //     }
+                    //     console.log("Attempting move with object:", moveObj)
+                    //     moveResult = newChess.move(moveObj)
+                    // }
 
-                    if (typeof move === 'string') {
-                        moveResult = newChess.move(move)
-                    } else if (move && typeof move === 'object') {
-                        const moveObj = {
-                            from: move.from,
-                            to: move.to,
-                            ...(move.promotion && { promotion: move.promotion })
-                        }
-                        console.log("Attempting move with object:", moveObj)
-                        moveResult = newChess.move(moveObj)
-                    }
+                    // console.log("moveResult: ", moveResult)
 
-                    console.log("moveResult: ", moveResult)
+                    // if (moveResult) {
+                    //     console.log("Move applied successfully")
+                    //     setBoard(newChess.board())
+                    //     setLastProcessedMove(moveId)
 
-                    if (moveResult) {
-                        console.log("Move applied successfully")
-                        setBoard(newChess.board())
-                        setLastProcessedMove(moveId)
-                        return newChess
-                    } else {
-                        console.error("Invalid move received from server:", move)
-                        return prevChess
-                    }
+                    //     setIsViewingHistory(false)
+                    //     setCanMove(true)
+                    //     setCurrentMoveIndex(-1)
+
+                    return newChess
+
                 } catch (error) {
                     console.error("Error applying move:", error, "Move was:", move)
                     return prevChess
