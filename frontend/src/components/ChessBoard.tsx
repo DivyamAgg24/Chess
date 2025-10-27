@@ -197,7 +197,7 @@ export const ChessBoard = ({ board, chess, socket, playerColor, canMove }: {
                                         }
                                     }
                                 }}
-                                className={`w-15 h-15 ${(actualRowIndex + actualColumnIndex) % 2 === 0 ? 'bg-[#3f822b]' : 'bg-[#d2cea2]'} relative`}
+                                className={`w-17 h-15 ${(actualRowIndex + actualColumnIndex) % 2 === 0 ? 'bg-[#3f822b]' : 'bg-[#d2cea2]'} relative`}
                             >
                                 <div className={`h-full w-full ${from === squareRepresentation ? 'bg-lime-500' : ''} ${canSelectPiece ? 'cursor-pointer' : ''}`}>
 

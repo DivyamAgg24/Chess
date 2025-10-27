@@ -101,7 +101,7 @@ export const Game = () => {
         setCurrentMoveIndex(-2) // Special value for starting position
         setIsViewingHistory(true)
         setCanMove(false)
-        
+
         const startChess = new Chess()
         setChess(startChess)
         setBoard(startChess.board())
@@ -120,7 +120,7 @@ export const Game = () => {
             newIndex = currentMoveIndex - 1
         }
 
-        if (newIndex < -2) {
+        if (newIndex < 0) {
             newIndex = -2
         }
         setCurrentMoveIndex(newIndex)
@@ -144,7 +144,7 @@ export const Game = () => {
         if (currentMoveIndex === -1 || moveHistory.length === 0) {
             return // Already at latest
         }
-        
+
         let newIndex: number
         if (currentMoveIndex === -2) {
             // At starting position, go to first move
@@ -152,7 +152,7 @@ export const Game = () => {
         } else {
             newIndex = currentMoveIndex + 1
         }
-        
+
         if (newIndex >= moveHistory.length - 1) {
             // Going to latest
             newIndex = -1
@@ -162,9 +162,9 @@ export const Game = () => {
             setIsViewingHistory(true)
             setCanMove(false)
         }
-        
+
         setCurrentMoveIndex(newIndex)
-        
+
         if (newIndex === -1) {
             // Latest position
             const latestFen = moveHistory[moveHistory.length - 1].after
@@ -181,11 +181,11 @@ export const Game = () => {
 
     const goToLatestMove = () => {
         if (moveHistory.length === 0) return
-        
+
         setCurrentMoveIndex(-1)
         setIsViewingHistory(false)
         setCanMove(true)
-        
+
         const latestFen = moveHistory[moveHistory.length - 1].after
         const latestChess = new Chess(latestFen)
         setChess(latestChess)
@@ -231,80 +231,216 @@ export const Game = () => {
                     </div>
                 </>) :
                 (<>
-                    <div className="max-w-screen-lg w-full pt-5">
-                        <div className="pb-5 text-primary font-bold flex items-center gap-x-3">
-                            <div className="shrink-0">
-                                <img src="/user-image.007dad08.svg" className="aspect-square h-10 rounded" />
-                            </div>
-                            <div className="flex flex-col min-h-[3rem]">
-                                <div className="text-lg leading-tight">{opponentName}</div>
-                                <div className="text-base leading-tight flex">
-                                    {piecesCaptured && playerColor === "white" ? (piecesCaptured.black || []).map((piece, index) => <img key={index} src={pieceImages['b' + piece]} className="h-5" />) : (piecesCaptured.white || []).map((piece, index) => <img key={index} src={pieceImages['w' + piece]} className="h-5" />)}
+                    <div className="flex">
+                        <div className="max-w-screen-lg w-full pt-5">
+                            <div className="pb-2 text-primary font-bold flex items-center gap-x-3">
+                                <div className="shrink-0">
+                                    <img src="/user-image.007dad08.svg" className="aspect-square h-10 rounded" />
+                                </div>
+                                <div className="flex flex-col min-h-[3rem]">
+                                    <div className="text-lg leading-tight">{opponentName}</div>
+                                    <div className="text-base leading-tight flex">
+                                        {piecesCaptured && playerColor === "white" ? (piecesCaptured.black || []).map((piece, index) => <img key={index} src={pieceImages['b' + piece]} className="h-5" />) : (piecesCaptured.white || []).map((piece, index) => <img key={index} src={pieceImages['w' + piece]} className="h-5" />)}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-6 gap-20">
-                            <div className="col-span-4 shadow-xl">
-                                <ChessBoard board={board} chess={chess} socket={socket} playerColor={playerColor} canMove={canMove} />
-                            </div>
-                        </div>
-
-
-                        {started && !gameOver && moveHistory.length > 0 && (
-                            <div className="flex items-center justify-center gap-2 mt-4">
-                                <Button 
-                                    onClick={goToStartingPosition}
-                                    disabled={currentMoveIndex === -2}
-                                    size="sm"
-                                    variant="outline"
-                                >
-                                    <ChevronsLeft className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                    onClick={goToPrevMove}
-                                    disabled={currentMoveIndex === -2}
-                                    size="sm"
-                                    variant="outline"
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                <span className="text-sm px-2 min-w-[120px] text-center">
-                                    {currentMoveIndex === -2 
-                                        ? "Starting" 
-                                        : currentMoveIndex === -1
-                                        ? `Move ${moveHistory.length}`
-                                        : `Move ${currentMoveIndex + 1}`
-                                    }
-                                </span>
-                                <Button 
-                                    onClick={goToNextMove}
-                                    disabled={currentMoveIndex === -1}
-                                    size="sm"
-                                    variant="outline"
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                    onClick={goToLatestMove}
-                                    disabled={currentMoveIndex === -1}
-                                    size="sm"
-                                    variant="outline"
-                                >
-                                    <ChevronsRight className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-
-                        <div className="pt-5 text-primary font-bold flex items-center gap-x-3">
-                            <div className="shrink-0">
-                                <img src="/user-image.007dad08.svg" className="aspect-square h-10 rounded" />
-                            </div>
-                            <div className="flex flex-col min-h-[3rem]">
-                                <div className="text-lg leading-tight">
-                                    {user?.name}
+                            <div className="grid grid-cols-1 md:grid-cols-10 gap-20">
+                                <div className="col-span-6 shadow-xl">
+                                    <ChessBoard board={board} chess={chess} socket={socket} playerColor={playerColor} canMove={canMove} />
                                 </div>
-                                <div className="text-base leading-tight flex">
-                                    {piecesCaptured && playerColor === "white" ? (piecesCaptured.white || []).map((piece, index) => <img key={index} src={pieceImages['w' + piece]} className="h-5" />) : (piecesCaptured.black || []).map((piece, index) => <img key={index} src={pieceImages['b' + piece]} className="h-5" />)}
+                                {/* <div className="col-span-4">
+                                    <div className="bg-primary text-primary-foreground">
+                                        <div className="text-xl font-semibold py-2 px-3">Move History</div>
+                                        <div className="px-3 pb-2 grid grid-cols-2">{moveHistory.map((move ) => (
+                                            <button key={move.moveNumber} className="flex gap-x-4" onClick={()=>{
+                                                setCurrentMoveIndex(move.moveNumber-1)
+                                                setIsViewingHistory(true)
+                                                setCanMove(false)
+                                                const latestChess = new Chess(move.after)
+                                                setChess(latestChess)
+                                                setBoard(latestChess.board())
+                                            }}>
+                                                {(move.moveNumber%2 === 0) ? <><div></div>
+                                                <div>{move.san}</div></> : <><div>{move.moveNumber}</div>
+                                                <div>{move.san}</div></>}
+                                                
+                                            </button>
+                                        ))}</div>
+                                    </div>
+                                    <div className="bg-accent p-2">
+                                        {started && !gameOver && moveHistory.length > 0 && (
+                                            <div className="flex items-center justify-center gap-x-4">
+                                                <Button
+                                                    onClick={goToStartingPosition}
+                                                    disabled={currentMoveIndex === -2}
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <ChevronsLeft className="h-2 w-2" />
+                                                </Button>
+                                                <Button
+                                                    onClick={goToPrevMove}
+                                                    disabled={currentMoveIndex === -2}
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <ChevronLeft className="h-2 w-2" />
+                                                </Button>
+                                                <span className="text-sm text-center">
+                                                    {currentMoveIndex === -2
+                                                        ? "Starting"
+                                                        : currentMoveIndex === -1
+                                                            ? `Move ${moveHistory.length}`
+                                                            : `Move ${currentMoveIndex + 1}`
+                                                    }
+                                                </span>
+                                                <Button
+                                                    onClick={goToNextMove}
+                                                    disabled={currentMoveIndex === -1}
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <ChevronRight className="h-2 w-2" />
+                                                </Button>
+                                                <Button
+                                                    onClick={goToLatestMove}
+                                                    disabled={currentMoveIndex === -1}
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <ChevronsRight className="h-2 w-2" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div> */}
+                                <div className="col-span-4">
+                                    <div className="bg-primary text-primary-foreground">
+                                        <div className="text-xl font-semibold py-2 px-3">Move History</div>
+                                        <div className="space-y-1 max-h-32  overflow-y-scroll">
+                                            {moveHistory.reduce<Array<{ white: any, black?: any, moveNum: number }>>((acc, move, index) => {
+                                                // Group moves in pairs (white and black)
+                                                if (index % 2 === 0) {
+                                                    // White's move
+                                                    acc.push({
+                                                        white: move,
+                                                        moveNum: Math.floor(index / 2) + 1
+                                                    })
+                                                } else {
+                                                    // Black's move - add to the last pair
+                                                    if (acc.length > 0) {
+                                                        acc[acc.length - 1].black = move
+                                                    }
+                                                }
+                                                return acc
+                                            }, []).map((movePair, pairIndex) => (
+                                                <div key={pairIndex} className={`grid grid-cols-12 py-1 gap-2 text-sm items-center px-3 ${pairIndex % 2 === 0 ? "bg-accent text-foreground" : "bg-primary"}`}>
+                                                    <div className="col-span-2 pl-2">
+                                                        {movePair.moveNum}.
+                                                    </div>
+
+                                                    <button
+                                                        className={`col-span-5 text-left px-2 py-1 rounded hover:bg-muted hover:text-accent-foreground hover:ease-in hover:transition-all hover:duration-150 ${currentMoveIndex === movePair.white.moveNumber - 1 ? 'bg-muted text-accent-foreground' : ''
+                                                            }`}
+                                                        onClick={() => {
+                                                            setCurrentMoveIndex(movePair.white.moveNumber - 1)
+                                                            setIsViewingHistory(true)
+                                                            setCanMove(false)
+                                                            const chess = new Chess(movePair.white.after)
+                                                            setChess(chess)
+                                                            setBoard(chess.board())
+                                                        }}
+                                                    >
+                                                        {movePair.white.san}
+                                                    </button>
+
+                                                    {/* Black's move */}
+                                                    {movePair.black ? (
+                                                        <button
+                                                            className={`col-span-5 text-left px-2 my-1 py-1 rounded hover:bg-muted hover:text-accent-foreground hover:ease-inhover:transition-all hover:duration-150 ${currentMoveIndex === movePair.black.moveNumber - 1  ? 'bg-muted text-accent-foreground' : ''
+                                                                }`}
+                                                            onClick={() => {
+                                                                setCurrentMoveIndex(movePair.black!.moveNumber - 1)
+                                                                setIsViewingHistory(true)
+                                                                setCanMove(false)
+                                                                const chess = new Chess(movePair.black!.after)
+                                                                setChess(chess)
+                                                                setBoard(chess.board())
+                                                            }}
+                                                        >
+                                                            {movePair.black.san}
+                                                        </button>
+                                                    ) : (
+                                                        <div className="col-span-5"></div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="bg-secondary p-2">
+                                        {moveHistory.length > 0 && (
+                                            <div className="flex items-center justify-center gap-x-4">
+                                                <Button
+                                                    onClick={goToStartingPosition}
+                                                    disabled={currentMoveIndex === -2}
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <ChevronsLeft className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    onClick={goToPrevMove}
+                                                    disabled={currentMoveIndex === -2}
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <ChevronLeft className="h-4 w-4" />
+                                                </Button>
+                                                <span className="text-sm text-center min-w-[80px]">
+                                                    {currentMoveIndex === -2
+                                                        ? "Start"
+                                                        : currentMoveIndex === -1
+                                                            ? `Move ${moveHistory.length}`
+                                                            : `Move ${currentMoveIndex + 1}`
+                                                    }
+                                                </span>
+                                                <Button
+                                                    onClick={goToNextMove}
+                                                    disabled={currentMoveIndex === -1 || currentMoveIndex === moveHistory.length-1}
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    onClick={goToLatestMove}
+                                                    disabled={currentMoveIndex === -1 || currentMoveIndex === moveHistory.length-1}
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <ChevronsRight className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+
+
+                            <div className="pt-5 text-primary font-bold flex items-center gap-x-3">
+                                <div className="shrink-0">
+                                    <img src="/user-image.007dad08.svg" className="aspect-square h-10 rounded" />
+                                </div>
+                                <div className="flex flex-col min-h-[3rem]">
+                                    <div className="text-lg leading-tight">
+                                        {user?.name}
+                                    </div>
+                                    <div className="text-base leading-tight flex">
+                                        {piecesCaptured && playerColor === "white" ? (piecesCaptured.white || []).map((piece, index) => <img key={index} src={pieceImages['w' + piece]} className="h-5" />) : (piecesCaptured.black || []).map((piece, index) => <img key={index} src={pieceImages['b' + piece]} className="h-5" />)}
+                                    </div>
                                 </div>
                             </div>
                         </div>

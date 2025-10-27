@@ -1,27 +1,80 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Crown, Trophy, Target, Calendar, Mail, User, Edit2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import axios from "axios";
+
+interface UserStats {
+    rating: number,
+    gamesPlayed: number,
+    wins: number,
+    losses: number,
+    draws: number,
+    winRate: number,
+    joinDate: string
+}
+
+interface Game {
+    id: string,
+    whitePlayer: { name: string, username: string, rating: number },
+    blackPlayer: { name: string, username: string, rating: number },
+    result: string,
+    endAt: Date
+}
 
 const Profile = () => {
     const navigate = useNavigate();
+    const { user, refreshUser } = useAuth()
     const [isEditing, setIsEditing] = useState(false);
-    const [profile, setProfile] = useState({
-        name: "Chess Master",
-        email: "chessmaster@example.com",
-        username: "ChessMaster2024",
-        bio: "Passionate chess player with 10 years of experience. Love tactical puzzles and endgame studies.",
-        rating: 1850,
-        gamesPlayed: 432,
-        winRate: 64,
-        joinDate: "January 2024"
-    });
+    const [userStats, setUserStats] = useState<UserStats | null>(null)
+    const [recentGames, setRecentGames] = useState<Game[]>([])
+    const [tab, setTab] = useState<string>("About")
+    const [name, setName] = useState(user?.name!)
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                if (!user?.id) {
+                    return
+                }
+                const [statsResponse, gamesResponse] = await Promise.all([
+                    axios.get(`/api/user/stats/${user?.id}`, { withCredentials: true }),
+                    axios.get(`/api/user/games/${user?.id}?limit=10`, { withCredentials: true })
+                ])
+
+                setUserStats(statsResponse.data)
+                setRecentGames(gamesResponse.data)
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        };
+
+        fetchUserData()
+    }, [user?.id])
+
+    const updateName = async () => {
+        try {
+            if (!user?.id) {
+                return
+            }
+
+            const response = await axios.post(`/api/user/updateName/${user?.id}`, {
+                name: name
+            }, { withCredentials: true })
+
+            await refreshUser()
+        } catch (error) {
+            console.error("Error updating name", error)
+        }
+
+    }
 
     const stats = [
-        { icon: Trophy, label: "Rating", value: profile.rating, color: "text-primary" },
-        { icon: Target, label: "Games Played", value: profile.gamesPlayed, color: "text-primary" },
-        { icon: Crown, label: "Win Rate", value: `${profile.winRate}%`, color: "text-primary" },
+        { icon: Trophy, label: "Rating", value: userStats?.rating, color: "text-primary" },
+        { icon: Target, label: "Games Played", value: userStats?.gamesPlayed, color: "text-primary" },
+        { icon: Crown, label: "Win Rate", value: `${userStats?.winRate}%`, color: "text-primary" },
     ];
 
     return (
@@ -44,17 +97,15 @@ const Profile = () => {
                     <Card>
                         <CardContent className="pt-6">
                             <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-                                <div className="h-32 w-32">
-                                    <img src="/user-image.007dad08.svg" alt={profile.name} />
-                                    <div className="bg-primary text-primary-foreground text-3xl">
-                                        {profile.name.split(' ').map(n => n[0]).join('')}
-                                    </div>
+                                <div className="h-32 w-32 relative flex shrink-0 overflow-hidden rounded-full">
+                                    <img src="/user-image.007dad08.svg" alt={user?.name!} className="aspect-square h-full w-full" />
+
                                 </div>
 
                                 <div className="flex-1 text-center md:text-left space-y-4">
                                     <div>
-                                        <h2 className="text-3xl font-bold text-foreground">{profile.name}</h2>
-                                        <p className="text-muted-foreground">@{profile.username}</p>
+                                        <h2 className="text-3xl font-bold text-foreground">{user?.name}</h2>
+                                        <p className="text-muted-foreground">@{user?.email}</p>
                                     </div>
 
                                     <div className="flex flex-wrap gap-4 justify-center md:justify-start">
@@ -83,14 +134,16 @@ const Profile = () => {
                     </Card>
 
                     {/* Tabs Section */}
-                    <div className="w-full">
-                        <div className="grid w-full grid-cols-3">
-                            <div >About</div>
-                            <div >Statistics</div>
-                            <div >Achievements</div>
+                    <div className="w-full space-y-4">
+                        <div className="w-full h-10 inline-flex items-center justify-center rounded-md bg-muted text-muted-foreground p-1">
+                            <div className="grid w-full grid-cols-3 place-items-center gap-x-3 mx-2">
+                                <div className={`w-full ${tab === "About" ? "bg-white" : ""} rounded inline-flex justify-center cursor-pointer`} onClick={() => { setTab("About") }}>About</div>
+                                <div className={`w-full ${tab === "Statistics" ? "bg-white" : ""} rounded inline-flex justify-center cursor-pointer`} onClick={() => { setTab("Statistics") }}>Statistics</div>
+                                <div className={`w-full ${tab === "Achievements" ? "bg-white" : ""} rounded inline-flex justify-center cursor-pointer`} onClick={() => { setTab("Achievements") }}>Achievements</div>
+                            </div>
                         </div>
 
-                        <div  className="space-y-4">
+                        {tab === "About" && <div className="space-y-4">
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Personal Information</CardTitle>
@@ -104,55 +157,21 @@ const Profile = () => {
                                         </label>
                                         <input
                                             id="name"
-                                            value={profile.name}
+                                            value={name}
                                             disabled={!isEditing}
-                                            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label htmlFor="email" className="flex items-center gap-2">
-                                            <Mail className="h-4 w-4" />
-                                            Email
-                                        </label>
-                                        <input
-                                            id="email"
-                                            type="email"
-                                            value={profile.email}
-                                            disabled={!isEditing}
-                                            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label htmlFor="username">Username</label>
-                                        <input
-                                            id="username"
-                                            value={profile.username}
-                                            disabled={!isEditing}
-                                            onChange={(e) => setProfile({ ...profile, username: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label htmlFor="bio">Bio</label>
-                                        <textarea
-                                            id="bio"
-                                            value={profile.bio}
-                                            disabled={!isEditing}
-                                            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                                            rows={4}
+                                            onChange={(e) => (setName(e.target.value))}
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                                         />
                                     </div>
 
                                     {isEditing && (
-                                        <Button className="w-full">Save Changes</Button>
+                                        <Button className="w-full" onClick={updateName}>Save Changes</Button>
                                     )}
                                 </CardContent>
                             </Card>
-                        </div>
+                        </div>}
 
-                        <div  className="space-y-4">
+                        {tab === "Statistics" && <div className="space-y-4">
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Game Statistics</CardTitle>
@@ -163,40 +182,40 @@ const Profile = () => {
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-center p-4 bg-secondary rounded-lg">
                                                 <span className="text-muted-foreground">Total Games</span>
-                                                <span className="text-2xl font-bold text-foreground">{profile.gamesPlayed}</span>
+                                                <span className="text-2xl font-bold text-foreground">{userStats?.gamesPlayed}</span>
                                             </div>
                                             <div className="flex justify-between items-center p-4 bg-secondary rounded-lg">
                                                 <span className="text-muted-foreground">Wins</span>
-                                                <span className="text-2xl font-bold text-foreground">277</span>
+                                                <span className="text-2xl font-bold text-foreground">{userStats?.wins}</span>
                                             </div>
                                             <div className="flex justify-between items-center p-4 bg-secondary rounded-lg">
                                                 <span className="text-muted-foreground">Draws</span>
-                                                <span className="text-2xl font-bold text-foreground">64</span>
+                                                <span className="text-2xl font-bold text-foreground">{userStats?.draws}</span>
                                             </div>
                                         </div>
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-center p-4 bg-secondary rounded-lg">
                                                 <span className="text-muted-foreground">Losses</span>
-                                                <span className="text-2xl font-bold text-foreground">91</span>
+                                                <span className="text-2xl font-bold text-foreground">{userStats?.losses}</span>
                                             </div>
                                             <div className="flex justify-between items-center p-4 bg-secondary rounded-lg">
                                                 <span className="text-muted-foreground">Win Rate</span>
-                                                <span className="text-2xl font-bold text-primary">{profile.winRate}%</span>
+                                                <span className="text-2xl font-bold text-primary">{userStats?.winRate}%</span>
                                             </div>
                                             <div className="flex justify-between items-center p-4 bg-secondary rounded-lg">
                                                 <span className="text-muted-foreground flex items-center gap-2">
                                                     <Calendar className="h-4 w-4" />
                                                     Member Since
                                                 </span>
-                                                <span className="text-lg font-semibold text-foreground">{profile.joinDate}</span>
+                                                <span className="text-lg font-semibold text-foreground">{userStats?.joinDate}</span>
                                             </div>
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
-                        </div>
+                        </div>}
 
-                        <div  className="space-y-4">
+                        {tab === "Achievements" && <div className="space-y-4">
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Achievements & Milestones</CardTitle>
@@ -223,7 +242,7 @@ const Profile = () => {
                                     </div>
                                 </CardContent>
                             </Card>
-                        </div>
+                        </div>}
                     </div>
                 </div>
             </div>

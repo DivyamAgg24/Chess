@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { AuthProvider, User } from "@prisma/client";
+import { AuthProvider, User, GameStatus } from "@prisma/client";
 
 interface UserData {
     username?: string | null
@@ -70,5 +70,32 @@ export const userService = {
             where: { id: userId },
             data: { lastLogin: new Date() }
         })
+    },
+
+    getGamesPlayed: async (userId: string) => {
+        const [gamesAsWhite, gamesAsBlack, user] = await Promise.all([
+            db.game.findMany({
+                where: {whitePlayerId: userId},
+                select: {
+                    result: true,
+                    status: true
+                }
+            }),
+            db.game.findMany({
+                where: {blackPlayerId: userId},
+                select: {
+                    result: true,
+                    status: true
+                }
+            }),
+            db.user.findUnique({
+                where: {id: userId},
+                select: {
+                    rating: true,
+                    createdAt: true
+                }
+            }) 
+        ]);
+        return {gamesAsWhite, gamesAsBlack, user}
     }
 }

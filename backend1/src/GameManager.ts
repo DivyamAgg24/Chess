@@ -200,7 +200,9 @@ export class GameManager {
                     gameState: {
                         fen: game.getBoard().fen(),
                         board: game.getBoard().board(),
-                        capturedPieces: [] // You'll need to track this in your Game class
+                        moveHistory: game.getMoveHistory(),
+                        capturedByWhite : game.capturedByWhite,
+                        capturedByBlack : game.capturedByBlack
                     }
                 }))
 

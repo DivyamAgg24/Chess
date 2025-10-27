@@ -143,6 +143,9 @@ export class Game {
     getGameId() {
         return this.gameId;
     }
+    getMoveHistory() {
+        return this.moveHistory;
+    }
 
     setPlayer1(socket: WebSocket) {
         this.player1 = socket;

@@ -5,6 +5,7 @@ import passport from "passport";
 import session from "express-session";
 import dotenv from "dotenv"
 import "./config/passport";
+import { userStatsRoute } from "./routes/user/stats";
 
 dotenv.config()
 
@@ -37,6 +38,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use('/auth', authRoute);
+app.use('/user', userStatsRoute);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {

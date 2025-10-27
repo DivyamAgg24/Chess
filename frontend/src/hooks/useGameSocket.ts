@@ -69,7 +69,7 @@ export const useGameSocket = ({
                     break
 
                 case MOVE:
-                    handleMove(message.payload, message.moveHistory[message.moveHistory.length-1].after)
+                    handleMove(message.payload, message.moveHistory[message.moveHistory.length - 1].after)
                     if (message.capturedByWhite && message.capturedByBlack) {
                         setPiecesCaptured({
                             white: message.capturedByWhite,
@@ -93,8 +93,14 @@ export const useGameSocket = ({
                         setOpponentName(message.opponentName)
 
                         // Restore captured pieces if provided
-                        if (message.gameState.capturedPieces) {
-                            setPiecesCaptured(message.gameState.capturedPieces)
+                        if (message.gameState.capturedByWhite && message.gameState.capturedByBlack) {
+                            setPiecesCaptured({
+                                white: message.gameState.capturedByWhite,
+                                black: message.gameState.capturedByBlack
+                            })
+                        }
+                        if (message.gameState.moveHistory) {
+                            setMoveHistory(message.gameState.moveHistory)
                         }
                     }
                     break

@@ -90,8 +90,11 @@
 
         --muted: 160 5% 95%;
         --muted-foreground: 160 3% 45%;
+        
+        /* --alt: 160 5% 90%;
+        --alt-foreground: 160 3% 45%; */
 
-        --accent: 160 15% 88%;
+        --accent: 160 15% 80%;
         --accent-foreground: 160 5% 15%;
 
         --destructive: 0 84.2% 60.2%;
