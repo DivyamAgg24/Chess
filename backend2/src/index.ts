@@ -10,7 +10,7 @@ import { userStatsRoute } from "./routes/user/stats";
 dotenv.config()
 
 const app = express()
-
+console.log(process.env.CLIENT_URL)
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [process.env.CLIENT_URL!]
   : ['http://localhost:5173'];
@@ -31,7 +31,7 @@ app.use(session({
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        sameSite: 'none',
         maxAge: 24 * 60 * 60 * 1000
     }
 }));
