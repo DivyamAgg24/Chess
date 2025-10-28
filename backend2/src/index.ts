@@ -11,10 +11,13 @@ dotenv.config()
 
 const app = express()
 
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [process.env.CLIENT_URL!]
+  : ['http://localhost:5173'];
+
 app.use(
     cors({
-        origin: "http://localhost:5173",
-        methods: 'GET,POST,PUT,DELETE',
+        origin: allowedOrigins,
         credentials: true,
         allowedHeaders: ['Content-Type', 'Authorization'],
     }),
@@ -24,13 +27,11 @@ app.use(express.json())
 app.use(session({
     secret: process.env.SESSION_SECRET!,
     resave: false,
-    saveUninitialized: false,
     cookie: {
-        secure: false, // Set to true in production with HTTPS
-        sameSite: 'lax',
-        domain: 'localhost',
-        path: '/',
-        maxAge: 60 * 60 * 1000 // 24 hours
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000
     }
 }));
 

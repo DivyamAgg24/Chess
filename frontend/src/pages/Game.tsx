@@ -248,72 +248,7 @@ export const Game = () => {
                                 <div className="col-span-6 shadow-xl">
                                     <ChessBoard board={board} chess={chess} socket={socket} playerColor={playerColor} canMove={canMove} />
                                 </div>
-                                {/* <div className="col-span-4">
-                                    <div className="bg-primary text-primary-foreground">
-                                        <div className="text-xl font-semibold py-2 px-3">Move History</div>
-                                        <div className="px-3 pb-2 grid grid-cols-2">{moveHistory.map((move ) => (
-                                            <button key={move.moveNumber} className="flex gap-x-4" onClick={()=>{
-                                                setCurrentMoveIndex(move.moveNumber-1)
-                                                setIsViewingHistory(true)
-                                                setCanMove(false)
-                                                const latestChess = new Chess(move.after)
-                                                setChess(latestChess)
-                                                setBoard(latestChess.board())
-                                            }}>
-                                                {(move.moveNumber%2 === 0) ? <><div></div>
-                                                <div>{move.san}</div></> : <><div>{move.moveNumber}</div>
-                                                <div>{move.san}</div></>}
-                                                
-                                            </button>
-                                        ))}</div>
-                                    </div>
-                                    <div className="bg-accent p-2">
-                                        {started && !gameOver && moveHistory.length > 0 && (
-                                            <div className="flex items-center justify-center gap-x-4">
-                                                <Button
-                                                    onClick={goToStartingPosition}
-                                                    disabled={currentMoveIndex === -2}
-                                                    size="sm"
-                                                    variant="outline"
-                                                >
-                                                    <ChevronsLeft className="h-2 w-2" />
-                                                </Button>
-                                                <Button
-                                                    onClick={goToPrevMove}
-                                                    disabled={currentMoveIndex === -2}
-                                                    size="sm"
-                                                    variant="outline"
-                                                >
-                                                    <ChevronLeft className="h-2 w-2" />
-                                                </Button>
-                                                <span className="text-sm text-center">
-                                                    {currentMoveIndex === -2
-                                                        ? "Starting"
-                                                        : currentMoveIndex === -1
-                                                            ? `Move ${moveHistory.length}`
-                                                            : `Move ${currentMoveIndex + 1}`
-                                                    }
-                                                </span>
-                                                <Button
-                                                    onClick={goToNextMove}
-                                                    disabled={currentMoveIndex === -1}
-                                                    size="sm"
-                                                    variant="outline"
-                                                >
-                                                    <ChevronRight className="h-2 w-2" />
-                                                </Button>
-                                                <Button
-                                                    onClick={goToLatestMove}
-                                                    disabled={currentMoveIndex === -1}
-                                                    size="sm"
-                                                    variant="outline"
-                                                >
-                                                    <ChevronsRight className="h-2 w-2" />
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div> */}
+                                
                                 <div className="col-span-4">
                                     <div className="bg-primary text-primary-foreground">
                                         <div className="text-xl font-semibold py-2 px-3">Move History</div>
