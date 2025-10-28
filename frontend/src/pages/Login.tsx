@@ -11,7 +11,7 @@ export const Login = () => {
 
     const guestLogin = async () => {
         try {
-            const response = await axios.post(`/api/auth/guest`, {
+            const response = await axios.post(`${BACKEND_URL}/auth/guest`, {
                 withCredentials: true
             })
             if (response.status === 200) {

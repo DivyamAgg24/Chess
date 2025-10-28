@@ -40,8 +40,8 @@ const Profile = () => {
                     return
                 }
                 const [statsResponse, gamesResponse] = await Promise.all([
-                    axios.get(`/api/user/stats/${user?.id}`, { withCredentials: true }),
-                    axios.get(`/api/user/games/${user?.id}?limit=10`, { withCredentials: true })
+                    axios.get(`${import.meta.env.VITE_HTTP_BACKEND_URL}/user/stats/${user?.id}`, { withCredentials: true }),
+                    axios.get(`${import.meta.env.VITE_HTTP_BACKEND_URL}/user/games/${user?.id}?limit=10`, { withCredentials: true })
                 ])
 
                 setUserStats(statsResponse.data)

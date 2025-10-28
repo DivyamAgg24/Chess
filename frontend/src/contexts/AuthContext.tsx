@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const checkAuth = async () => {
         try {
             setLoading(true)
-            const res = await axios.get<User>(`/api/auth/me`, {
+            const res = await axios.get<User>(`${import.meta.env.VITE_HTTP_BACKEND_URL}/auth/me`, {
                 withCredentials: true, // important for cookies
             });
             setUser(res.data);

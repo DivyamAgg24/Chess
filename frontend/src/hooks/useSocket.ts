@@ -4,7 +4,7 @@ export const useSocket = () => {
     const [socket, setSocket] = useState<WebSocket | null>(null)
     
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8080")
+        const ws = new WebSocket(import.meta.env.VITE_WS_BACKEND_URL)
         
         ws.onopen = () => {
             console.log("Connected")
