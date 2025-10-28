@@ -53,7 +53,7 @@ router.get(
     }),
     (req, res) => {
         console.log("Google OAuth success for user:", req.user);
-        res.redirect(`${process.env.CLIENT_URL}/`);
+        res.redirect(`${process.env.CLIENT_URL}/game`);
     }
 );
 
