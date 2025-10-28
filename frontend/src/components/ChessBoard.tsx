@@ -1,5 +1,5 @@
 import { Chess, Color, Move, PieceSymbol, Square } from "chess.js";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MOVE } from "../pages/Game";
 
 const pieceImages: Record<string, string> = {

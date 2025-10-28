@@ -6,7 +6,7 @@ import { Chess } from "chess.js"
 import { useAuth } from "../contexts/AuthContext"
 import { useGameState } from "../hooks/useGameState"
 import { useGameSocket } from "../hooks/useGameSocket"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Home, LogOut, User2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Home, LogOut } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 export const INIT_GAME = "init_game"
@@ -36,8 +36,8 @@ export const Game = () => {
     const [board, setBoard] = useState(chess.board())
     const [started, setStarted] = useState(false)
     const [playerColor, setPlayerColor] = useState("")
-    const [gameOver, setGameOver] = useState(false)
-    const [winner, setWinner] = useState("")
+    const [_gameOver, setGameOver] = useState(false)
+    const [_winner, setWinner] = useState("")
     const [piecesCaptured, setPiecesCaptured] = useState<{ white: string[], black: string[] }>({ white: [], black: [] })
     const [gameId, setGameId] = useState<string | null>(null);
     const { user, logout } = useAuth();
@@ -54,7 +54,7 @@ export const Game = () => {
     }>>([])
 
     const [currentMoveIndex, setCurrentMoveIndex] = useState<number>(-1)
-    const [isViewingHistory, setIsViewingHistory] = useState(false)
+    const [_isViewingHistory, setIsViewingHistory] = useState(false)
     const [canMove, setCanMove] = useState(true)
 
 

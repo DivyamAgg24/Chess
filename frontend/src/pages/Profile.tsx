@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
-import { Crown, Trophy, Target, Calendar, Mail, User, Edit2 } from "lucide-react";
+import { Crown, Trophy, Target, Calendar, User, Edit2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
@@ -29,7 +29,7 @@ const Profile = () => {
     const { user, refreshUser } = useAuth()
     const [isEditing, setIsEditing] = useState(false);
     const [userStats, setUserStats] = useState<UserStats | null>(null)
-    const [recentGames, setRecentGames] = useState<Game[]>([])
+    const [_recentGames, setRecentGames] = useState<Game[]>([])
     const [tab, setTab] = useState<string>("About")
     const [name, setName] = useState(user?.name!)
 
@@ -60,7 +60,7 @@ const Profile = () => {
                 return
             }
 
-            const response = await axios.post(`/api/user/updateName/${user?.id}`, {
+            await axios.post(`/api/user/updateName/${user?.id}`, {
                 name: name
             }, { withCredentials: true })
 

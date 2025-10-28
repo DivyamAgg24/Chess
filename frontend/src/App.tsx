@@ -4,7 +4,6 @@ import { Landing } from './pages/Landing'
 import { Game } from './pages/Game'
 import { Login } from './pages/Login'
 import { AuthProvider } from './contexts/AuthContext'
-import { Topbar } from './components/TopBar'
 import { ProtectedRoute } from './lib/ProtectedRoute'
 import Profile from './pages/Profile'
 
