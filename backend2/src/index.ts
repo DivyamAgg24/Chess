@@ -12,8 +12,8 @@ dotenv.config()
 const app = express()
 
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.CLIENT_URL!]
-  : ['http://localhost:5173'];
+    ? [process.env.CLIENT_URL!]
+    : ['http://localhost:5173'];
 
 
 app.use(
@@ -30,12 +30,13 @@ app.use(session({
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000
-    }
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
+    },
 }));
 
 app.use(passport.initialize());
