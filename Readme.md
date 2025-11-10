@@ -83,6 +83,3 @@ The `demo/` folder contains a demo video of the working website.
 
 ## Vercel Link
 [Chess Website on Vercel](https://chess-two-self.vercel.app)
-
-⚠️ Note: The Vercel link currently only hosts the landing page (frontend).  
-The backend is not yet deployed, so login and gameplay won’t work from this link.
